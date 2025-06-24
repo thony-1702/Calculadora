@@ -15,12 +15,22 @@ class MainActivity : AppCompatActivity() {
     private val calculadora = Calculadora()
 
     private lateinit var tvResultado: TextView
-    private lateinit var etFirstNumber: EditText
-    private lateinit var etSecondNumber: EditText
+    private lateinit var btnIrParImpar: Button
+    private lateinit var bt0: Button
+    private lateinit var bt1: Button
+    private lateinit var bt2: Button
+    private lateinit var bt3: Button
+    private lateinit var bt4: Button
+    private lateinit var bt5: Button
+    private lateinit var bt6: Button
+    private lateinit var bt7: Button
+    private lateinit var bt8: Button
+    private lateinit var bt9: Button
     private lateinit var btSuma: Button
     private lateinit var btResta: Button
     private lateinit var btMultiplicacion: Button
-    private lateinit var btDivision: Button
+    private lateinit var btDivision: Button // Corregido de bt_divicion a btDivision
+    private lateinit var btBorrar: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,43 +45,101 @@ class MainActivity : AppCompatActivity() {
 
         // vistas
         tvResultado = findViewById(R.id.tv_resultado)
-        etFirstNumber = findViewById(R.id.first_number)
-        etSecondNumber = findViewById(R.id.second_number)
+        btnIrParImpar = findViewById(R.id.btn_ir_par_impar)
+        bt0 = findViewById(R.id.bt_0)
+        bt1 = findViewById(R.id.bt_1)
+        bt2 = findViewById(R.id.bt_2)
+        bt3 = findViewById(R.id.bt_3)
+        bt4 = findViewById(R.id.bt_4)
+        bt5 = findViewById(R.id.bt_5)
+        bt6 = findViewById(R.id.bt_6)
+        bt7 = findViewById(R.id.bt_7)
+        bt8 = findViewById(R.id.bt_8)
+        bt9 = findViewById(R.id.bt_9)
         btSuma = findViewById(R.id.bt_suma)
         btResta = findViewById(R.id.bt_resta)
         btMultiplicacion = findViewById(R.id.bt_multiplicacion)
-        btDivision = findViewById(R.id.bt_divicion)
+        btDivision = findViewById(R.id.bt_divicion) // Corregido de bt_divicion a btDivision
+        btBorrar = findViewById(R.id.bt_borrar)
 
         // eventos
-        btSuma.setOnClickListener { operar("suma") }
-        btResta.setOnClickListener { operar("resta") }
-        btMultiplicacion.setOnClickListener { operar("multiplicacion") }
-        btDivision.setOnClickListener { operar("division") }
-    }
+        // Configurar OnClickListener para el botón btnIrParImpar
+        btnIrParImpar.setOnClickListener {
+            // Crear una instancia de tu ParImparFragment
+            val parImparFragment = ParImparFragment()
 
-    private fun operar(operacion: String) {
-        val num1 = etFirstNumber.text.toString().toDoubleOrNull()
-        val num2 = etSecondNumber.text.toString().toDoubleOrNull()
-
-        if (num1 == null || num2 == null) {
-            Toast.makeText(this, "Por favor ingrese números válidos", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val resultado = when (operacion) {
-            "suma" -> calculadora.suma(num1, num2)
-            "resta" -> calculadora.resta(num1, num2)
-            "multiplicacion" -> calculadora.multiplicacion(num1, num2)
-            "division" -> {
-                if (num2 == 0.0) {
-                    Toast.makeText(this, "No se puede dividir por cero", Toast.LENGTH_SHORT).show()
-                    return
-                }
-                calculadora.division(num1, num2)
+            // Obtener el FragmentManager y comenzar una transacción
+            supportFragmentManager.beginTransaction().apply {
+                // Reemplazar el contenido del contenedor (R.id.main) con el fragment
+                // R.id.main es el ID de tu ConstraintLayout raíz en activity_main.xml
+                replace(R.id.main, parImparFragment)
+                // Opcional: Agregar la transacción al back stack
+                // Esto permite al usuario volver a la vista anterior (la calculadora)
+                // presionando el botón "Atrás" del dispositivo.
+                addToBackStack(null)
+                // Confirmar la transacción
+                commit()
             }
-            else -> 0.0
         }
 
-        tvResultado.text = "RESULTADO: ${"%.2f".format(resultado)}"
+        // Listeners para los botones numéricos
+        val numberButtons = listOf(bt0, bt1, bt2, bt3, bt4, bt5, bt6, bt7, bt8, bt9)
+        numberButtons.forEach { button ->
+            button.setOnClickListener {
+                agregarNumero(button.text.toString())
+            }
+        }
+
+        // Listeners para los botones de operaciones
+        btSuma.setOnClickListener { agregarOperador("+") }
+        btResta.setOnClickListener { agregarOperador("-") }
+        btMultiplicacion.setOnClickListener { agregarOperador("X") }
+        btDivision.setOnClickListener { agregarOperador("/") }
+
+        // Listener para el botón de borrar
+        btBorrar.setOnClickListener { borrarUltimo() }
+
+        // Listener para el botón de igual (a implementar si se añade)
+        // Ejemplo: findViewById<Button>(R.id.bt_igual).setOnClickListener { calcularResultado() }
     }
+
+    private fun agregarNumero(numero: String) {
+        if (tvResultado.text.toString() == "RESULTADO" || tvResultado.text.toString() == "0") {
+            tvResultado.text = numero
+        } else {
+            tvResultado.append(numero)
+        }
+    }
+
+    private fun agregarOperador(operador: String) {
+        val textoActual = tvResultado.text.toString()
+        if (textoActual != "RESULTADO" && textoActual.isNotEmpty() && !esOperador(textoActual.last().toString())) {
+            tvResultado.append(operador)
+        }
+    }
+
+    private fun esOperador(char: String): Boolean {
+        return char == "+" || char == "-" || char == "X" || char == "/"
+    }
+
+    private fun borrarUltimo() {
+        val textoActual = tvResultado.text.toString()
+        if (textoActual.isNotEmpty() && textoActual != "RESULTADO") {
+            tvResultado.text = textoActual.substring(0, textoActual.length - 1)
+            if (tvResultado.text.isEmpty()) {
+                tvResultado.text = "0"
+            }
+        }
+    }
+
+    // private fun calcularResultado() {
+    // Aquí iría la lógica para evaluar la expresión en tvResultado.text
+    // Por ejemplo, usando una librería para evaluar expresiones matemáticas
+    // o implementando un parser simple.
+    // Por ahora, solo mostramos un Toast.
+    //     Toast.makeText(this, "Calcular resultado (pendiente)", Toast.LENGTH_SHORT).show()
+    //     val expresion = tvResultado.text.toString()
+    //     // Lógica de cálculo...
+    //     // tvResultado.text = "Resultado calculado"
+    // }
 }
